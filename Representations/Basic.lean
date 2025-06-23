@@ -13,6 +13,10 @@ example (n : ℕ) : Representation ℂ (DihedralGroup n) ℂ :=
 example (n : ℕ) : Representation ℤ (DihedralGroup n) ℤ :=
   Representation.trivial _ _ _
 
+-- Let's get the left regular representation
+noncomputable
+example (n : ℕ) : Representation ℤ (DihedralGroup n) (DihedralGroup n →₀ ℤ) :=
+  Representation.leftRegular _ _
 
 #check Equiv.Perm
 
