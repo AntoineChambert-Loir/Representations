@@ -13,7 +13,6 @@ noncomputable section
 -- 3) theorem rot_id_pow : a generalized version, should be easy
 -- 4) all of these are used to prove stdmap is multiplicative (std_mul).
 
-variable (n : ℕ)
 abbrev V₂ := Fin 2 → ℝ
 -- instance : AddCommMonoid V₂ := Pi.addCommMonoid
 -- instance : Module ℝ V₂ := inferInstance -- Pi.module _ _ _
@@ -26,7 +25,7 @@ open DihedralGroup
 def A : Matrix (Fin 2) (Fin 2) ℝ := !![1, 2; 3, 4]
 def A_lin : V₂ →ₗ[ℝ] V₂ := Matrix.toLin' A
 
-noncomputable def rotMat (n : ℕ) : Matrix (Fin 2) (Fin 2) ℝ :=
+def rotMat (n : ℕ) : Matrix (Fin 2) (Fin 2) ℝ :=
   !![Real.cos (2 * Real.pi / n),
    -Real.sin (2 * Real.pi / n);
    Real.sin (2 * Real.pi / n),
@@ -35,7 +34,7 @@ noncomputable def rotMat (n : ℕ) : Matrix (Fin 2) (Fin 2) ℝ :=
 #check Real.cos_add --  cos (x + y) = cos x * cos y - sin x * sin y
 
 
-theorem rot_l (l : ℕ): (rotMat n)^l  = !![Real.cos (2 * Real.pi * l/ n),
+theorem rot_l (n l : ℕ): (rotMat n)^l  = !![Real.cos (2 * Real.pi * l/ n),
    -Real.sin (2 * Real.pi * l / n);
    Real.sin (2 * Real.pi * l / n),
    Real.cos (2 * Real.pi * l / n)] := by
@@ -45,29 +44,58 @@ theorem rot_l (l : ℕ): (rotMat n)^l  = !![Real.cos (2 * Real.pi * l/ n),
   rw [pow_add, ih]
   unfold rotMat
   ext i j
-  match i with
-  | 0 =>
-    match j with
-    | 0 =>
+  fin_cases i <;> {
+  · fin_cases j <;> {
       simp
-      rw [← sub_eq_add_neg , ← Real.cos_add]
+      rw [mul_add, add_div]
+      try rw [Real.sin_add]
+      try rw [Real.cos_add]
       ring_nf
-    | 1 => sorry
-  | 1 => sorry
+    }
+  }
 
 
-theorem rot_id : ∀ (l : ℕ),  (rotMat n)^n = 1 := by
-  -- intro l
-  sorry
+theorem rot_id (n : ℕ) (hn : n ≠ 0): (rotMat n)^n = 1 := by
+  rw [rot_l n]
+  ext i j
+  fin_cases i <;> {
+    fin_cases j <;> {
+      simp
+      rw [mul_div_assoc, div_self, mul_one]
+      try rw [Real.cos_two_pi]
+      try rw [Real.sin_two_pi]
+      exact Nat.cast_ne_zero.mpr hn
+    }
+  }
 
 
-theorem rot_id_pow : ∀ (l : ℕ),  (rotMat n)^(l*n) = 1 := by
-  -- deduced the theorem to above
-  sorry
+theorem rot_id_pow (n : ℕ) (hn : n ≠ 0): ∀ (l : ℕ), (rotMat n)^(n * l) = 1 := by
+  intro l
+  induction' l with l ih
+  · simp
+  rw[mul_add, pow_add, ih, one_mul, mul_one]
+  exact rot_id n hn
 
 
-noncomputable def refMat : Matrix (Fin 2) (Fin 2) ℝ :=
+
+
+def refMat : Matrix (Fin 2) (Fin 2) ℝ :=
   !![1 , 0 ; 0,  -1]
+
+theorem ref_rot (n: ℕ)  (hn : n ≠ 0): (rotMat n) * refMat = refMat * (rotMat n)^(n-1) := by
+  rw [rot_l]
+  unfold rotMat refMat
+  ext i j
+  fin_cases i <;> {
+    fin_cases j <;> {
+      simp
+      try rw [← Real.cos_two_pi_sub]
+      try rw [← Real.sin_two_pi_sub]
+      congr 1
+      field_simp
+      ring
+    }
+  }
 
 def stdmap (n : ℕ) : DihedralGroup n → (V₂ →ₗ[ℝ] V₂) := by
   intro g
@@ -75,7 +103,7 @@ def stdmap (n : ℕ) : DihedralGroup n → (V₂ →ₗ[ℝ] V₂) := by
   | .r k => exact Matrix.toLin' ((rotMat n)^k.val)
   | .sr k => exact Matrix.toLin' (refMat * (rotMat n)^k.val)
 
-theorem stdmap_one : stdmap n 1 = 1 := by
+theorem stdmap_one (n : ℕ): stdmap n 1 = 1 := by
   rw [one_def]
   unfold stdmap
   simp
@@ -85,25 +113,46 @@ theorem stdmap_one : stdmap n 1 = 1 := by
 #check Matrix.toLin'_mul
 
 
-theorem stdmap_mul : ∀ x y , stdmap n (x * y) = stdmap n x ∘ₗ stdmap n y := by
+theorem stdmap_mul (n: ℕ) (hn : n ≠ 0): ∀ x y , stdmap n (x * y) = stdmap n x ∘ₗ stdmap n y := by
   intro x y
-  match x with
-  | .r k =>
-      match y with
-      |.r l =>
-        unfold stdmap
-        simp
-        rw [(Matrix.toLin'_mul (rotMat n ^ k.val) (rotMat n ^ l.val)).symm]
-        rw [← pow_add]
+  match y with
+  |.r l =>
+    match x with
+    |.r k =>
+      rw[r_mul_r]
+      unfold stdmap
+      simp
+      repeat rw [← Matrix.toLin'_mul]
+      congr 1
+      rw [← pow_add]
+      by_cases h : k.val + l.val < n
+      · have : (k + l).val = k.val + l.val :=  ZMod.val_add_of_lt h
+        rw [this]
+      · push_neg at h
+        haveI : NeZero n := ⟨hn⟩
+        have : k.val + l.val = (k + l).val + n := ZMod.val_add_val_of_le h
+        rw [this, pow_add, rot_id n hn, mul_one]
 
-        -- now we need to show that power by k.val + l.val and (k+l).val evaluate to the same matrix.
-        -- (!) need (rotMat n)^n = 1. doing this above ^
 
-        sorry
-      |.sr l => sorry
-  | .sr k => sorry
+    |.sr k =>
+      rw[sr_mul_r]
+      unfold stdmap
+      simp
+      repeat rw [← Matrix.toLin'_mul]
+      congr 1
+      rw [mul_assoc]
+      congr 1
+      rw [← pow_add]
+      by_cases h : k.val + l.val < n
+      · have : (k + l).val = k.val + l.val :=  ZMod.val_add_of_lt h
+        rw [this]
+      · push_neg at h
+        haveI : NeZero n := ⟨hn⟩
+        have : k.val + l.val = (k + l).val + n := ZMod.val_add_val_of_le h
+        rw [this, pow_add, rot_id n hn, mul_one]
 
 
+  |.sr l => sorry
 
 
 def rep_example (n : ℕ) : Representation  ℂ (DihedralGroup n) V₂ where
