@@ -77,8 +77,6 @@ theorem rot_id_pow (n : ℕ) (hn : n ≠ 0): ∀ (l : ℕ), (rotMat n)^(n * l) =
   exact rot_id n hn
 
 
-
-
 def refMat : Matrix (Fin 2) (Fin 2) ℝ :=
   !![1 , 0 ; 0,  -1]
 
@@ -97,6 +95,80 @@ theorem ref_rot (n: ℕ)  (hn : n ≠ 0): (rotMat n) * refMat = refMat * (rotMat
     }
   }
 
+
+theorem ref_rot' (n: ℕ)  (hn : n ≠ 0): (rotMat n)^(n-1) * refMat = refMat * rotMat n := by
+  rw [rot_l]
+  unfold rotMat refMat
+  ext i j
+  fin_cases i <;> {
+    fin_cases j <;> {
+      simp
+      try rw [← Real.cos_two_pi_sub]
+      try rw [← Real.sin_two_pi_sub]
+      congr 1
+      field_simp
+      ring
+    }
+  }
+
+
+theorem ref_ref_id : refMat * refMat  = 1:= by
+  unfold refMat
+  ext i j
+  fin_cases i <;> {
+    fin_cases j <;>  simp }
+
+
+#check Nat.zero_le
+theorem ref_rot_gen (n: ℕ)  (hn : n ≠ 0): ∀ l', (l' < n) → (rotMat n)^l' = refMat * (rotMat n)^(n-l') * refMat  := by
+  intro l' hl'
+  induction' l' with l' ih
+  · rw [pow_zero, tsub_zero, rot_id n hn, mul_one, ref_ref_id]
+  rw [← Nat.sub_sub, ← mul_one (rotMat n ^ (n - l' - 1)), ← rot_id n hn, ← pow_add]
+  have : n - l' - 1 + n = (n - l') + (n - 1) := by
+    rw [add_comm]
+    rw [← Nat.add_sub_assoc]
+    rw [add_comm]
+    rw [Nat.add_sub_assoc]
+    exact Nat.one_le_iff_ne_zero.mpr hn
+    rw [@Order.one_le_iff_pos]
+    exact  Nat.sub_pos_of_lt (Nat.lt_of_succ_lt hl')
+  by_cases hl'' : l' < n
+  · set ih' := ih hl''
+  -- now we need to show rotMat n ^ (l' + 1) = refMat * rotMat n ^ (n - l' - 1 + n) * refMat
+    rw [this]
+    nth_rw 2 [pow_add]
+    rw [← mul_one ((rotMat n) ^ (n - l')), ← ref_ref_id]
+    repeat rw [← mul_assoc]
+    rw [← ih']
+    rw [mul_assoc, mul_assoc]
+    nth_rw 2 [ ← mul_assoc]
+    rw [pow_add, pow_one]
+    congr 1
+    rw [← ref_rot n hn, mul_assoc, ref_ref_id, mul_one]
+  -- the other case which is a contradiction
+  · have hl''' : l' < n :=  Nat.lt_of_succ_lt hl'
+    contradiction
+
+
+theorem ref_rot_id (n: ℕ)  (hn : n ≠ 0): ∀ (l : ℕ), refMat * (rotMat n)^l * refMat * (rotMat n)^l = 1 := by
+  intro l
+  induction' l with l ih
+  · simp
+    exact ref_ref_id
+  nth_rw 1 [pow_add, pow_one]
+  nth_rw 1 [← mul_assoc]
+  nth_rw 2 [mul_assoc]
+  rw [ref_rot n hn]
+  repeat rw [mul_assoc]
+  rw [← pow_add, add_comm, add_assoc]
+  rw [pow_add]
+  repeat rw [← mul_assoc]
+  rw [ih, one_mul]
+  have : 1 + (n - 1) = n := by omega
+  rw [this, rot_id n hn]
+
+
 def stdmap (n : ℕ) : DihedralGroup n → (V₂ →ₗ[ℝ] V₂) := by
   intro g
   match g with
@@ -114,6 +186,7 @@ theorem stdmap_one (n : ℕ): stdmap n 1 = 1 := by
 
 
 theorem stdmap_mul (n: ℕ) (hn : n ≠ 0): ∀ x y , stdmap n (x * y) = stdmap n x ∘ₗ stdmap n y := by
+  haveI : NeZero n := ⟨hn⟩
   intro x y
   match y with
   |.r l =>
@@ -133,7 +206,6 @@ theorem stdmap_mul (n: ℕ) (hn : n ≠ 0): ∀ x y , stdmap n (x * y) = stdmap 
         have : k.val + l.val = (k + l).val + n := ZMod.val_add_val_of_le h
         rw [this, pow_add, rot_id n hn, mul_one]
 
-
     |.sr k =>
       rw[sr_mul_r]
       unfold stdmap
@@ -151,11 +223,81 @@ theorem stdmap_mul (n: ℕ) (hn : n ≠ 0): ∀ x y , stdmap n (x * y) = stdmap 
         have : k.val + l.val = (k + l).val + n := ZMod.val_add_val_of_le h
         rw [this, pow_add, rot_id n hn, mul_one]
 
+  |.sr l =>
+    match x with
+    |.r k =>
+      rw [r_mul_sr]
+      unfold stdmap
+      simp
+      repeat rw [← Matrix.toLin'_mul]
+      congr 1
 
-  |.sr l => sorry
+      set m := l-k
+      have : l = m+k := by ring
+      rw [this]
+
+      by_cases h : m.val + k.val < n
+      · have : (m + k).val = m.val + k.val :=  ZMod.val_add_of_lt h
+        rw [this, add_comm, pow_add]
+        repeat rw [← mul_assoc]
+        congr 1
+        nth_rw 1 [← one_mul ((rotMat n)^ k.val), ← ref_ref_id, ← mul_one refMat]
+        repeat rw  [mul_assoc]
+        congr 1
+        repeat rw [← mul_assoc]
+        rw [ref_rot_id n hn k.val]
+
+        -- Alternatively,  after the first congr 1,
+        -- nth_rw 1 [ref_rot_gen n hn k.val (ZMod.val_lt k)]
+        -- nth_rw 2 [mul_assoc]
+        -- rw [ref_ref_id, mul_one, mul_assoc, ← pow_add]
+        -- rw [Nat.sub_add_cancel (ZMod.val_le k), rot_id n hn, mul_one]
+
+      push_neg at h
+      have : m.val + k.val = (m + k).val + n := ZMod.val_add_val_of_le h
+      rw [← mul_one ((rotMat n) ^ ((m + k).val)), ← rot_id n hn, ← pow_add, ←this, add_comm, pow_add]
+      repeat rw [← mul_assoc]
+      congr 1
+      nth_rw 1 [← one_mul ((rotMat n)^ k.val), ← ref_ref_id, ← mul_one refMat]
+      repeat rw  [mul_assoc]
+      congr 1
+      repeat rw [← mul_assoc]
+      rw [ref_rot_id n hn k.val]
+
+      -- Alternatively,  after the first congr 1,
+      -- nth_rw  1[← one_mul (rotMat n ^ k.val), ← ref_ref_id]
+      -- nth_rw 1 [← mul_one refMat]
+      -- repeat rw [mul_assoc]
+      -- congr 1
+      -- symm
+      -- repeat rw [← mul_assoc]
+      -- exact ref_rot_id n hn k.val
+
+    |.sr k =>
+      rw [sr_mul_sr]
+      unfold stdmap
+      simp
+      repeat rw [← Matrix.toLin'_mul]
+      congr 1
+
+      set m := l-k
+      have : l = m+k := by ring
+      rw [this]
+
+      by_cases h : m.val + k.val < n
+      · have : (m + k).val = m.val + k.val :=  ZMod.val_add_of_lt h
+        rw [this, add_comm, pow_add]
+        repeat rw [← mul_assoc]
+        rw [ref_rot_id n hn k.val, one_mul]
+
+      push_neg at h
+      have : m.val + k.val = (m + k).val + n := ZMod.val_add_val_of_le h
+      rw [← mul_one ((rotMat n) ^ ((m + k).val)), ← rot_id n hn, ← pow_add, ←this, add_comm, pow_add]
+      repeat rw [← mul_assoc]
+      rw [ref_rot_id n hn k.val, one_mul]
 
 
-def rep_example (n : ℕ) : Representation  ℂ (DihedralGroup n) V₂ where
-  toFun := stdmap -- (DihedralGroup n) → (V₂ →ₗ[ℂ] V₂)
-  map_one' := stdmap_one
-  map_mul' := stdmap_mul
+def rep_example (n : ℕ) (hn : n ≠ 0) : Representation  ℝ (DihedralGroup n) V₂ where
+  toFun := stdmap n -- (DihedralGroup n) → (V₂ →ₗ[ℂ] V₂)
+  map_one' := stdmap_one n
+  map_mul' := stdmap_mul n hn
