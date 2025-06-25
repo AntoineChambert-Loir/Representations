@@ -205,10 +205,48 @@ noncomputable example : GL (Fin 2) ℝ →* (Fin 2 → ℝ) →ₗ[ℝ] Fin 2 �
 
 
 
+open Real
+
+noncomputable abbrev rotationMatrix (θ : ℝ) : Matrix (Fin 2) (Fin 2) ℝ :=
+  !![cos θ, -sin θ;
+     sin θ,  cos θ]
+
+theorem rotationMatrix_pow (θ : ℝ) (l : ℕ) :
+    (rotationMatrix θ) ^ l = rotationMatrix (θ * l) := by
+  induction' l with l ih
+  · simp [rotationMatrix]; apply Matrix.one_fin_two
+  · rw [pow_add, ih]
+    unfold rotationMatrix
+    ext i j
+    fin_cases i <;> fin_cases j <;> (
+      simp
+      rw [mul_add]
+      try rw [Real.sin_add]
+      try rw [Real.cos_add]
+      ring_nf
+    )
+
+theorem rotationMatrix_pow_n [NeZero n] (i : ℤ) :
+    rotationMatrix (2 * π * i / n) ^ n = 1 := by
+  rw [rotationMatrix_pow]
+  have h₁ : cos (2 * π * i) = 1 := sorry
+  have h₂ : sin (2 * π * i) = 0 := sorry
+  ext i j; fin_cases i <;> fin_cases j <;> simpa
+
+abbrev reflectionMatrix /- (θ : ℝ) -/ : Matrix (Fin 2) (Fin 2) ℝ :=
+  !![1,  0;
+     0, -1]
+
+theorem reflectionMatrix_mul_self : reflectionMatrix * reflectionMatrix = 1 := by
+  ext i j; fin_cases i <;> fin_cases j <;> simp
+
+theorem reflectionMatrix_conj_rotationMatrix (θ : ℝ) :
+    reflectionMatrix * rotationMatrix θ * reflectionMatrix⁻¹ = (rotationMatrix (-θ)) := by
+  rw [(show reflectionMatrix⁻¹ = reflectionMatrix from
+         sorry /- DivisionMonoid.inv_eq_of_mul reflectionMatrix_mul_self -/)]
+  ext i j; fin_cases i <;> fin_cases j <;> simp
 
 
-#check Matrix.GeneralLinearGroup
-#check Matrix.GeneralLinearGroup.toLin
 
 noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
   dsimp [Representation]
