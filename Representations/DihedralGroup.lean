@@ -1,4 +1,5 @@
-import Mathlib.GroupTheory.SpecificGroups.Dihedral
+import Mathlib
+--import Mathlib.GroupTheory.SpecificGroups.Dihedral
 
 variable {n : ℕ}
 
@@ -168,4 +169,55 @@ def homEquiv : (DihedralGroup n →* G) ≃ PresentationData n G where
     · apply lift_apply_r_one
     · apply lift_apply_sr_zero
 
+
+-- how to work with points in (Fin 2 → ℝ)
+def v : Fin 2 → ℝ := ![1, 0]
+
+def u : Fin 2 → ℝ := fun i => if i = 0 then 1 else 0
+
+def w : Fin 2 → ℝ := fun
+  | 0 => 1
+  | 1 => 0
+
+
+-- how to work with maps (Fin 2 → ℝ) → (Fin 2 → ℝ)
+def f : (Fin 2 → ℝ) → (Fin 2 → ℝ) :=
+  fun v => fun i => 2 * v i
+
+
+
+-- noncomputable def matrixToLin (M : GL (Fin 2) ℝ) : (Fin 2 → ℝ) →ₗ[ℝ] Fin 2 → ℝ where
+--   toFun := fun v => fun i => ∑ j, M i j * v j
+--   map_add' := sorry
+--   map_smul' := sorry
+
+noncomputable example : GL (Fin 2) ℝ →* (Fin 2 → ℝ) ≃ₗ[ℝ] Fin 2 → ℝ := by
+  let u := Matrix.GeneralLinearGroup.toLin (n := Fin 2) (R := ℝ)
+  let v := LinearMap.GeneralLinearGroup.generalLinearEquiv (R := ℝ) (Fin 2 → ℝ)
+  let w := u.trans v
+  exact w.toMonoidHom
+
+noncomputable example : GL (Fin 2) ℝ →* (Fin 2 → ℝ) →ₗ[ℝ] Fin 2 → ℝ := by
+  let e : LinearMap.GeneralLinearGroup ℝ (Fin 2 → ℝ) →*  ((Fin 2 → ℝ) →ₗ[ℝ] Fin 2 → ℝ) :=
+    DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)
+  let u := Matrix.GeneralLinearGroup.toLin (n := Fin 2) (R := ℝ)
+  exact e.comp u.toMonoidHom
+
+
+
+
+
+#check Matrix.GeneralLinearGroup
+#check Matrix.GeneralLinearGroup.toLin
+
+noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
+  dsimp [Representation]
+  let G := GL (Fin 2) ℝ
+  let r : G := sorry
+  let s : G := sorry
+  let h_a : r ^ n = 1 := sorry
+  let h_b : s * s = 1 := sorry
+  let h_ab : s * r * s⁻¹ = r⁻¹ := sorry
+  let φ := lift h_a h_b h_ab
+  exact ((DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)).comp Matrix.GeneralLinearGroup.toLin.toMonoidHom).comp φ
 end DihedralGroup
