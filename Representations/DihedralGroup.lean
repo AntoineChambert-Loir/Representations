@@ -1,5 +1,6 @@
 import Mathlib
 --import Mathlib.GroupTheory.SpecificGroups.Dihedral
+-- set_option diagnostics true
 
 variable {n : ℕ}
 
@@ -264,11 +265,26 @@ lemma reflectionMatrix_unit_mul_self : reflectionMatrix_unit * reflectionMatrix_
   rw [Units.ext_iff]
   exact reflectionMatrix_mul_self
 
+lemma rotM_isUnit: ∀ (θ : ℝ), IsUnit (rotationMatrix (θ : ℝ)):= by
+  intro θ
+  let A := rotationMatrix (θ : ℝ)
+  have hA1: A.det =  1 := by
+    unfold A
+    simp
+    repeat rw [← pow_two]
+    rw [cos_sq_add_sin_sq]
+  simp only [Matrix.isUnit_iff_isUnit_det]
+  rw [hA1]
+  exact isUnit_one
+
+noncomputable def rotationMatrix_unit (θ : ℝ): GL (Fin 2) ℝ := by
+  have h : IsUnit (rotationMatrix (θ : ℝ)):= by exact rotM_isUnit θ
+  exact h.unit
 
 noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
   dsimp [Representation]
   let G := GL (Fin 2) ℝ
-  let r : G := sorry
+  let r : G := rotationMatrix_unit (2 * π / n)
   let s : G := reflectionMatrix_unit
   let h_a : r ^ n = 1 := sorry
   let h_b : s * s = 1 := by
