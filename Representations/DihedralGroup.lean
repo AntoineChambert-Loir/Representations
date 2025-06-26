@@ -265,6 +265,10 @@ lemma reflectionMatrix_unit_mul_self : reflectionMatrix_unit * reflectionMatrix_
   rw [Units.ext_iff]
   exact reflectionMatrix_mul_self
 
+lemma reflectionMatrix_unit_eq_inv_self : reflectionMatrix_unit⁻¹ = reflectionMatrix_unit := by
+  rw [@inv_eq_iff_mul_eq_one]
+  exact reflectionMatrix_unit_mul_self
+
 lemma rotM_isUnit: ∀ (θ : ℝ), IsUnit (rotationMatrix (θ : ℝ)):= by
   intro θ
   let A := rotationMatrix (θ : ℝ)
@@ -281,6 +285,24 @@ noncomputable def rotationMatrix_unit (θ : ℝ): GL (Fin 2) ℝ := by
   have h : IsUnit (rotationMatrix (θ : ℝ)):= by exact rotM_isUnit θ
   exact h.unit
 
+lemma conj_relation : reflectionMatrix * rotationMatrix (2 * π / ↑n)
+    * reflectionMatrix * rotationMatrix (2 * π / ↑n) = 1 := by
+  ext i j
+  simp
+  fin_cases i
+  . fin_cases j
+    . sorry
+    . sorry
+  . fin_cases j
+    . sorry
+    . sorry
+
+lemma conj_unit_relation : reflectionMatrix_unit * rotationMatrix_unit (2 * π / ↑n)
+    * reflectionMatrix_unit * rotationMatrix_unit (2 * π / ↑n) = 1 := by
+  dsimp [reflectionMatrix_unit, rotationMatrix_unit]
+  rw [Units.ext_iff]
+  exact conj_relation
+
 noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
   dsimp [Representation]
   let G := GL (Fin 2) ℝ
@@ -290,7 +312,12 @@ noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 �
   let h_b : s * s = 1 := by
     simp [s]
     exact reflectionMatrix_unit_mul_self
-  let h_ab : s * r * s⁻¹ = r⁻¹ := sorry
+  let h_ab : s * r * s⁻¹ = r⁻¹ := by
+    simp [r, s]
+    rw [eq_inv_iff_mul_eq_one]
+    rw [reflectionMatrix_unit_eq_inv_self]
+    exact conj_unit_relation
   let φ := lift h_a h_b h_ab
-  exact ((DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)).comp Matrix.GeneralLinearGroup.toLin.toMonoidHom).comp φ
+  exact ((DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)).comp
+    Matrix.GeneralLinearGroup.toLin.toMonoidHom).comp φ
 end DihedralGroup
