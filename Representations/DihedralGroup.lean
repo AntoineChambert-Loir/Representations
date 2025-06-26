@@ -1,5 +1,6 @@
 import Mathlib
 --import Mathlib.GroupTheory.SpecificGroups.Dihedral
+-- set_option diagnostics true
 
 variable {n : ℕ}
 
@@ -246,7 +247,17 @@ theorem reflectionMatrix_conj_rotationMatrix (θ : ℝ) :
          sorry /- DivisionMonoid.inv_eq_of_mul reflectionMatrix_mul_self -/)]
   ext i j; fin_cases i <;> fin_cases j <;> simp
 
-
+lemma rotM_isUnit: ∀ (θ : ℝ), IsUnit (rotationMatrix (θ : ℝ)):= by
+  intro θ
+  let A := rotationMatrix (θ : ℝ)
+  have hA1: A.det =  1 := by
+    unfold A
+    simp
+    repeat rw [← pow_two]
+    rw [cos_sq_add_sin_sq]
+  simp only [Matrix.isUnit_iff_isUnit_det]
+  rw [hA1]
+  exact isUnit_one
 
 noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
   dsimp [Representation]
