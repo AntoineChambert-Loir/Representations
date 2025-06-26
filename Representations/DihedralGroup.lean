@@ -302,11 +302,30 @@ lemma conj_relation : reflectionMatrix * rotationMatrix (2 * π / ↑n)
   simp
   fin_cases i
   . fin_cases j
-    . sorry
-    . sorry
+    . simp only [Fin.zero_eta, Fin.isValue, Matrix.cons_val_zero, Matrix.one_apply_eq]
+      -- i = 0, j = 0
+      rw [← pow_two]
+      rw [← pow_two]
+      simp only [cos_sq_add_sin_sq]
+
+    . simp only [Fin.mk_one, Fin.isValue, Matrix.cons_val_one, Matrix.cons_val_fin_one,
+      Fin.zero_eta, Matrix.cons_val_zero, ne_eq, zero_ne_one, not_false_eq_true,
+      Matrix.one_apply_ne]
+      -- i = 0 j = 1
+      ring
+
   . fin_cases j
-    . sorry
-    . sorry
+    . simp only [Fin.zero_eta, Fin.isValue, Matrix.cons_val_zero, Fin.mk_one, Matrix.cons_val_one,
+      ne_eq, one_ne_zero, not_false_eq_true, Matrix.one_apply_ne]
+      -- i = 1, j = 0
+      ring
+
+    . simp only [Fin.mk_one, Fin.isValue, Matrix.cons_val_one, Matrix.cons_val_fin_one,
+      Matrix.one_apply_eq]
+      -- i = 1, j = 1
+      rw [← pow_two]
+      rw [← pow_two]
+      simp only [sin_sq_add_cos_sq]
 
 lemma conj_unit_relation : reflectionMatrix_unit * rotationMatrix_unit (2 * π / ↑n)
     * reflectionMatrix_unit * rotationMatrix_unit (2 * π / ↑n) = 1 := by
