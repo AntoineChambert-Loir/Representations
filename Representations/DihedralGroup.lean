@@ -246,13 +246,24 @@ theorem reflectionMatrix_conj_rotationMatrix (θ : ℝ) :
          sorry /- DivisionMonoid.inv_eq_of_mul reflectionMatrix_mul_self -/)]
   ext i j; fin_cases i <;> fin_cases j <;> simp
 
+-- example of obtaining an element of GL given a matrix and proof of invertibility
+noncomputable example (t : Matrix (Fin 2) (Fin 2) ℝ) (h : IsUnit t) : GL (Fin 2) ℝ := h.unit
+
+noncomputable def reflectionMatrix_unit : GL (Fin 2) ℝ := by
+  have h : IsUnit reflectionMatrix := by
+    rw [isUnit_iff_exists]
+    use reflectionMatrix
+    constructor
+    . exact reflectionMatrix_mul_self
+    . exact reflectionMatrix_mul_self
+  exact h.unit
 
 
 noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
   dsimp [Representation]
   let G := GL (Fin 2) ℝ
   let r : G := sorry
-  let s : G := sorry
+  let s : G := reflectionMatrix_unit
   let h_a : r ^ n = 1 := sorry
   let h_b : s * s = 1 := sorry
   let h_ab : s * r * s⁻¹ = r⁻¹ := sorry
