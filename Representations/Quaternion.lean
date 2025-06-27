@@ -1,11 +1,7 @@
 import Mathlib.GroupTheory.SpecificGroups.Quaternion
 import Mathlib.Tactic.NoncommRing
 
-variable (n: ℕ) (G: Type*) [Monoid G]
-
-open QuaternionGroup
-
-variable {n: ℕ}
+variable {n: ℕ} {G: Type*} [Monoid G]
 
 example {G': Type*} [Group G'] {a: G'} {a_pow_n_eq_one: a^n = 1} {k l: ℕ} :
     k ≡ l [ZMOD n] → a^k = a^l := by
@@ -17,7 +13,7 @@ example {G': Type*} [Group G'] {a: G'} {a_pow_n_eq_one: a^n = 1} {k l: ℕ} :
   rw [kh] at h
   simpa using Int.ModEq.of_mul_right k h
 
-lemma pow_eq_pow_of_ModEq {G: Type*} [Monoid G] {a: G} {i j n: ℕ}
+lemma pow_eq_pow_of_ModEq {a: G} {i j n: ℕ}
     (h₁: a^n = 1) (h₂: i ≡ j [MOD n]) : a^i = a^j := by
   wlog i_le_j: i ≤ j
   · exact (this h₁ h₂.symm $ le_of_not_ge i_le_j).symm
@@ -26,7 +22,7 @@ lemma pow_eq_pow_of_ModEq {G: Type*} [Monoid G] {a: G} {i j n: ℕ}
     simp [hk, pow_add, pow_mul, h₁]
 
 /-
-lemma rel_two_eq_xa_right {G: Type*} [Monoid G] {a x: G} {i j: ℕ} (h₁: i ≤ j) (h₂: a * x * a = x): 
+lemma rel_two_eq_xa_right {a x: G} {i j: ℕ} (h₁: i ≤ j) (h₂: a * x * a = x):
     a^i * x * a^j = x * a^(j - i) := by
   if i_zero: i = 0 then
     simp [i_zero]
@@ -53,14 +49,14 @@ lemma rel_two_eq_xa_zpow {G: Type*} [Group G] {a x: G} {i j: ℤ} (h₂: a * x *
         _ = a^(-1: ℤ) * (a^(-k: ℤ) * x * a^j) := by group
         _ = a^(-1: ℤ) * ((a * x * a) * a^(j - -k)) := by rw [hk, h₂]
       group
-    | succ k hk => 
+    | succ k hk =>
       conv_lhs => calc a^((k: ℤ) + 1) * x * a^j
         _ = a * (a^(k: ℤ) * x * a^j) := by group
         _ = a * (x * a^(j - k)) := by rw [hk]
         _ = (a * x * a) * a^(j - (k + 1)) := by group
       rw [h₂]
 
-lemma rel_two_eq_xa {G: Type*} [Monoid G] {a x: G} {n: ℕ} [NeZero n] {i j: ZMod n}
+lemma rel_two_eq_xa {a x: G} [NeZero n] {i j: ZMod n}
     (h₁: a^n = 1) (h₂: a * x * a = x):
     a^i.val * x * a^j.val = x * a^(j - i).val := by
   if n_one: n = 1 then
@@ -97,7 +93,9 @@ lemma rel_two_eq_xa {G: Type*} [Monoid G] {a x: G} {n: ℕ} [NeZero n] {i j: ZMo
     exact this
 termination_by i.val
 
-def QuaternionGroup.lift [NeZero n] (a x: G)
+namespace QuaternionGroup
+
+def lift [NeZero n] (a x: G)
     (h₁: a^(2 * n) = 1) (h₂: x^2 = a^n) (h₃: a * x * a = x):
     QuaternionGroup n →* G where
   toFun := fun g => match g with
@@ -144,7 +142,7 @@ def lift_nzero_to_group {G: Type*} [Group G] (a x: G) (h₁: x^2 = 1) (h₂: a *
         _ = x^2 * a^(m - l) := by noncomm_ring
       simp [h₁]
 
-def lift_nzero {G: Type*} [Monoid G] (a x: G) (h₁: x^2 = 1) (h₂: a * x * a = x):
+def lift_nzero (a x: G) (h₁: x^2 = 1) (h₂: a * x * a = x):
     QuaternionGroup 0 →* G :=
   let f: QuaternionGroup 0 → G := fun g => match g with
     | .a (k: ℤ) => if k ≥ 0 then a^k.natAbs else x * a^k.natAbs * x
@@ -191,7 +189,7 @@ def lift_nzero {G: Type*} [Monoid G] (a x: G) (h₁: x^2 = 1) (h₂: a * x * a =
       -/
   }
 
-
+end QuaternionGroup
 
 /-
 
@@ -246,7 +244,7 @@ def lift_n_zero (a x: G) (h₂: x^2 = 1) (h₃: a * x * a = x):
           _ = x * a^(l + m).natAbs * x := by rw [<-Int.natAbs_add_of_nonpos (le_of_lt sl) (le_of_lt sm)]
       );
 
-      (case a.a.inr.inr.inr.inr => 
+      (case a.a.inr.inr.inr.inr =>
         have := Int.add_pos_of_pos_of_nonneg sl (le_of_lt sm)
         simp [neg_disc_pos_zero this, <-pow_add]
         rw [<-Int.natAbs_add_of_nonneg (le_of_lt sl) (le_of_lt sm)]
