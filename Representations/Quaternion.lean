@@ -1,6 +1,5 @@
-import Representations.Basic
-
-import Mathlib
+import Mathlib.GroupTheory.SpecificGroups.Quaternion
+import Mathlib.Tactic.NoncommRing
 
 variable (n: ℕ) (G: Type*) [Monoid G]
 
@@ -58,7 +57,7 @@ lemma rel_two_eq_xa {G: Type*} [Monoid G] {a x: G} {n: ℕ} [NeZero n] {i j: ZMo
 
 termination_by i.val
 
-def lift [NeZero n] (a x: G) (h₁: a^(2 * n) = 1) (h₂: x^2 = a^n) (h₃: a * x * a = x):
+def QuaternionGroup.lift [NeZero n] (a x: G) (h₁: a^(2 * n) = 1) (h₂: x^2 = a^n) (h₃: a * x * a = x):
     QuaternionGroup n →* G where
   toFun := fun g => match g with
     | .a k => a ^ k.val

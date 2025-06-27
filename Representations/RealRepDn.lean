@@ -1,6 +1,9 @@
 -- work by Hikari Iwasaki on June 24, 2025 --
-import Mathlib
-#check DihedralGroup
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
+import Mathlib.GroupTheory.SpecificGroups.Dihedral
+import Mathlib.RepresentationTheory.Basic
+
+-- #check DihedralGroup
 
 noncomputable section
 
@@ -31,7 +34,7 @@ def rotMat (n : ℕ) : Matrix (Fin 2) (Fin 2) ℝ :=
    Real.sin (2 * Real.pi / n),
    Real.cos (2 * Real.pi / n)]
 
-#check Real.cos_add --  cos (x + y) = cos x * cos y - sin x * sin y
+-- #check Real.cos_add -- cos (x + y) = cos x * cos y - sin x * sin y
 
 
 theorem rot_l (n l : ℕ): (rotMat n)^l  = !![Real.cos (2 * Real.pi * l/ n),
@@ -119,7 +122,7 @@ theorem ref_ref_id : refMat * refMat  = 1:= by
     fin_cases j <;>  simp }
 
 
-#check Nat.zero_le
+-- #check Nat.zero_le
 theorem ref_rot_gen (n: ℕ)  (hn : n ≠ 0): ∀ l', (l' < n) → (rotMat n)^l' = refMat * (rotMat n)^(n-l') * refMat  := by
   intro l' hl'
   induction' l' with l' ih
@@ -181,8 +184,8 @@ theorem stdmap_one (n : ℕ): stdmap n 1 = 1 := by
   simp
   rfl
 
-#check LinearMap.toMatrix'_comp
-#check Matrix.toLin'_mul
+-- #check LinearMap.toMatrix'_comp
+-- #check Matrix.toLin'_mul
 
 
 theorem stdmap_mul (n: ℕ) (hn : n ≠ 0): ∀ x y , stdmap n (x * y) = stdmap n x ∘ₗ stdmap n y := by
