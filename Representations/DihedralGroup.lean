@@ -403,43 +403,29 @@ theorem rot_mul_refl_mul_rot_eq_refl_unit (θ : ℝ) :
     = reflectionMatrix_unit := by
   ext : 1; push_cast; exact rot_mul_refl_mul_rot_eq_refl θ
 
-noncomputable def representation :
-    Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
-  dsimp [Representation]
-  let G := GL (Fin 2) ℝ
-  let r : G := rotationMatrix_unit (2 * π / n)
-  let s : G := reflectionMatrix_unit
-  have h_a : r ^ n = 1 := by
-    cases Nat.eq_zero_or_pos n with
-      | inl h_zero  => rw [pow_eq_one_iff_modEq, h_zero]
-
-      | inr h_pos =>
-        haveI : NeZero n := NeZero.of_pos h_pos
-
-        unfold r
-        --have hmodify : rotationMatrix_unit (2 * π / n) ^ n
-        --               = rotationMatrix_unit (2 * π * 1 / n) ^ n := by
-        --  simp only [mul_one]
-        --rw [hmodify]
-        have hl2 : rotationMatrix_unit (2 * π * (1 : ℤ)/ ↑n) ^ n
-                   = rotationMatrix_unit (2 * π / ↑n) ^ n := by
-          have h : 2 * π * (1: ℤ) / n = 2 * π / n := by
-            simp only [Int.cast_one, mul_one]
-          rw [h]
-        rw [← hl2]
-        rw [rotationMatrix_unit_pow_n (1 : ℤ)]
-
-  have h_b : s * s = 1 := reflectionMatrix_unit_mul_self
-  have h_ab : r * s * r = s := by
-    unfold r s
-    symm; rewrite [←inv_mul_eq_one, reflectionMatrix_unit_eq_inv_self]
-    simp only [←mul_assoc] -- left-associate
-    exact conj_unit_relation
-  let φ := lift h_a h_b h_ab
-  exact ((DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)).comp
+noncomputable def representationViaGL :
+    Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) :=
+  have hl2 : rotationMatrix_unit (2 * π * (1 : ℤ)/ ↑n) ^ n
+             = rotationMatrix_unit (2 * π / ↑n) ^ n := by
+    have h : 2 * π * (1: ℤ) / n = 2 * π / n := by
+      simp only [Int.cast_one, mul_one]
+    rw [h]
+  let φ := lift (hl2 ▸ rotationMatrix_unit_pow_n 1)
+                reflectionMatrix_unit_mul_self
+                (rot_mul_refl_mul_rot_eq_refl_unit _)
+  ((DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)).comp
     Matrix.GeneralLinearGroup.toLin.toMonoidHom).comp φ
 
 end GLApproach
+
+noncomputable def representationViaMatrix (i : ℤ) :
+    Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) :=
+  -- Go from matrices to linear endomorphisms.
+  MonoidHom.comp (Matrix.toLinAlgEquiv (Pi.basisFun ℝ (Fin 2))) <|
+  -- Construct DihedralGroup n →* Matrix (Fin 2) (Fin 2) ℝ using `lift`.
+  lift (rotationMatrix_pow_n i)
+       reflectionMatrix_mul_self
+       (rot_mul_refl_mul_rot_eq_refl _)
 
 end Real2DRepresentation
 
