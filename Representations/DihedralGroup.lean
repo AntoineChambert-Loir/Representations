@@ -1,6 +1,7 @@
-import Mathlib
---import Mathlib.GroupTheory.SpecificGroups.Dihedral
--- set_option diagnostics true
+import Mathlib.GroupTheory.SpecificGroups.Dihedral
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
+import Mathlib.RepresentationTheory.Basic
 
 variable {n : ℕ}
 
