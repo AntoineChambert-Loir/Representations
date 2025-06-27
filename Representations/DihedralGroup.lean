@@ -22,7 +22,11 @@ lemma r_one_pow_cast (i : ZMod n) :
 
 end MissingLemmas
 
-/-! # The Relations
+/-!
+# Presentation
+In this section, we prove that `DihedralGroup n` has the presentation $\langle r, s : r^n = 1, s^2 = 1, rsr = s \rangle$.
+
+## Relations
 Here, we prove (or demonstrate that Mathlib has already proved) that the relations hold in the dihedral group and for any homomorphism out of the dihedral group.
 -/
 example : (DihedralGroup.r 1 : DihedralGroup n) ^ n = 1 :=
@@ -53,7 +57,7 @@ lemma r_mul_sr_mul_r (i j : ZMod n) :
   rwa [sub_self i, add_zero j] at this
 
 /-!
-# Lifting
+## Lifting
 Here, we construct the homomorphism out of the dihedral group into another group corresponding to given elements satisfying the relations.
 
 We also show that the two constructions are inverse, defining an equivalence between homomorphisms and elements satisfying the relations.
@@ -236,6 +240,7 @@ def homEquiv : (DihedralGroup n →* G) ≃ PresentationData n G where
 
 end UniversalProperty
 
+/-! # Construction of standard 2-dimensional representations -/
 section Real2DRepresentation
 
 -- how to work with points in (Fin 2 → ℝ)
