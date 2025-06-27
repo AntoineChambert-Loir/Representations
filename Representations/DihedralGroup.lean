@@ -83,10 +83,6 @@ lemma hom_relation₃' [Group G] (f : DihedralGroup n →* G) :
   rw [sr_conj_r, DihedralGroup.inv_r]
 -/
 
--- example {G H} [Group G] [Monoid H] (f : G →* H) (x : G) (n : ℤ) : f (x ^ n) = _ := sorry
-
-example {G H} [Group G] [Monoid H] (f : G →* H) : G →* Hˣ := f.toHomUnits
-
 -- These are dangerous as simp lemmas for some reason related to applying it to Gˣˣˣ...
 lemma hom_apply_r (i : ZMod n) :
     (f (.r i) : G) = ((f.toHomUnits (.r 1)) ^ (i.cast : ℤ) : Gˣ) := by
