@@ -239,16 +239,16 @@ end UniversalProperty
 section Real2DRepresentation
 
 -- how to work with points in (Fin 2 → ℝ)
-def v : Fin 2 → ℝ := ![1, 0]
+example : Fin 2 → ℝ := ![1, 0]
 
-def u : Fin 2 → ℝ := fun i => if i = 0 then 1 else 0
+example : Fin 2 → ℝ := fun i => if i = 0 then 1 else 0
 
-def w : Fin 2 → ℝ := fun
+example : Fin 2 → ℝ := fun
   | 0 => 1
   | 1 => 0
 
 -- how to work with maps (Fin 2 → ℝ) → (Fin 2 → ℝ)
-def f : (Fin 2 → ℝ) → (Fin 2 → ℝ) :=
+example : (Fin 2 → ℝ) → (Fin 2 → ℝ) :=
   fun v => fun i => 2 * v i
 
 -- noncomputable def matrixToLin (M : GL (Fin 2) ℝ) : (Fin 2 → ℝ) →ₗ[ℝ] Fin 2 → ℝ where
