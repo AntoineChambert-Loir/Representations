@@ -1,4 +1,6 @@
-import Mathlib.GroupTheory.SpecificGroups.Dihedral
+import Mathlib
+--import Mathlib.GroupTheory.SpecificGroups.Dihedral
+-- set_option diagnostics true
 
 variable {n : ℕ}
 
@@ -234,5 +236,202 @@ def homEquiv : (DihedralGroup n →* G) ≃ PresentationData n G where
     · simp [lift, lift_apply_sr_nat]
 
 end UniversalProperty
+
+section Real2DRepresentation
+
+-- how to work with points in (Fin 2 → ℝ)
+def v : Fin 2 → ℝ := ![1, 0]
+
+def u : Fin 2 → ℝ := fun i => if i = 0 then 1 else 0
+
+def w : Fin 2 → ℝ := fun
+  | 0 => 1
+  | 1 => 0
+
+-- how to work with maps (Fin 2 → ℝ) → (Fin 2 → ℝ)
+def f : (Fin 2 → ℝ) → (Fin 2 → ℝ) :=
+  fun v => fun i => 2 * v i
+
+-- noncomputable def matrixToLin (M : GL (Fin 2) ℝ) : (Fin 2 → ℝ) →ₗ[ℝ] Fin 2 → ℝ where
+--   toFun := fun v => fun i => ∑ j, M i j * v j
+--   map_add' := sorry
+--   map_smul' := sorry
+
+noncomputable example : GL (Fin 2) ℝ →* (Fin 2 → ℝ) ≃ₗ[ℝ] Fin 2 → ℝ := by
+  let u := Matrix.GeneralLinearGroup.toLin (n := Fin 2) (R := ℝ)
+  let v := LinearMap.GeneralLinearGroup.generalLinearEquiv (R := ℝ) (Fin 2 → ℝ)
+  let w := u.trans v
+  exact w.toMonoidHom
+
+noncomputable example : GL (Fin 2) ℝ →* (Fin 2 → ℝ) →ₗ[ℝ] Fin 2 → ℝ := by
+  let e : LinearMap.GeneralLinearGroup ℝ (Fin 2 → ℝ) →*  ((Fin 2 → ℝ) →ₗ[ℝ] Fin 2 → ℝ) :=
+    DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)
+  let u := Matrix.GeneralLinearGroup.toLin (n := Fin 2) (R := ℝ)
+  exact e.comp u.toMonoidHom
+
+open Real
+
+noncomputable abbrev rotationMatrix (θ : ℝ) : Matrix (Fin 2) (Fin 2) ℝ :=
+  !![cos θ, -sin θ;
+     sin θ,  cos θ]
+
+theorem rotationMatrix_pow (θ : ℝ) (l : ℕ) :
+    (rotationMatrix θ) ^ l = rotationMatrix (θ * l) := by
+  induction' l with l ih
+  · simp [rotationMatrix]; apply Matrix.one_fin_two
+  · rw [pow_add, ih]
+    unfold rotationMatrix
+    ext i j
+    fin_cases i <;> fin_cases j <;> (
+      simp
+      rw [mul_add]
+      try rw [Real.sin_add]
+      try rw [Real.cos_add]
+      ring_nf
+    )
+
+theorem rotationMatrix_pow_n [NeZero n] (i : ℤ) :
+    rotationMatrix (2 * π * i / n) ^ n = 1 := by
+  rw [rotationMatrix_pow]
+  have h₁ : cos (2 * π * i) = 1 := sorry
+  have h₂ : sin (2 * π * i) = 0 := sorry
+  ext i j; fin_cases i <;> fin_cases j <;> simpa
+
+abbrev reflectionMatrix /- (θ : ℝ) -/ : Matrix (Fin 2) (Fin 2) ℝ :=
+  !![1,  0;
+     0, -1]
+
+theorem reflectionMatrix_mul_self : reflectionMatrix * reflectionMatrix = 1 := by
+  ext i j; fin_cases i <;> fin_cases j <;> simp
+
+theorem reflectionMatrix_conj_rotationMatrix (θ : ℝ) :
+    reflectionMatrix * rotationMatrix θ * reflectionMatrix⁻¹ = (rotationMatrix (-θ)) := by
+  rw [(show reflectionMatrix⁻¹ = reflectionMatrix from
+         sorry /- DivisionMonoid.inv_eq_of_mul reflectionMatrix_mul_self -/)]
+  ext i j; fin_cases i <;> fin_cases j <;> simp
+
+-- example of obtaining an element of GL given a matrix and proof of invertibility
+noncomputable example (t : Matrix (Fin 2) (Fin 2) ℝ) (h : IsUnit t) : GL (Fin 2) ℝ := h.unit
+
+lemma reflectionMatrix_is_unit : IsUnit reflectionMatrix := by
+    rw [isUnit_iff_exists]
+    use reflectionMatrix
+    constructor
+    . exact reflectionMatrix_mul_self
+    . exact reflectionMatrix_mul_self
+
+noncomputable def reflectionMatrix_unit : GL (Fin 2) ℝ :=
+    reflectionMatrix_is_unit.unit
+
+lemma reflectionMatrix_unit_mul_self : reflectionMatrix_unit * reflectionMatrix_unit = 1 := by
+  dsimp [reflectionMatrix_unit]
+  rw [Units.ext_iff]
+  exact reflectionMatrix_mul_self
+
+lemma reflectionMatrix_unit_eq_inv_self : reflectionMatrix_unit⁻¹ = reflectionMatrix_unit := by
+  rw [@inv_eq_iff_mul_eq_one]
+  exact reflectionMatrix_unit_mul_self
+
+lemma rotM_isUnit: ∀ (θ : ℝ), IsUnit (rotationMatrix (θ : ℝ)):= by
+  intro θ
+  let A := rotationMatrix (θ : ℝ)
+  have hA1: A.det =  1 := by
+    unfold A
+    simp
+    repeat rw [← pow_two]
+    rw [cos_sq_add_sin_sq]
+  simp only [Matrix.isUnit_iff_isUnit_det]
+  rw [hA1]
+  exact isUnit_one
+
+noncomputable def rotationMatrix_unit (θ : ℝ): GL (Fin 2) ℝ := by
+  have h : IsUnit (rotationMatrix (θ : ℝ)):= by exact rotM_isUnit θ
+  exact h.unit
+
+lemma rotationMatrix_unit_pow (θ : ℝ) (l : ℕ) : (rotationMatrix_unit θ) ^ l = rotationMatrix_unit (θ * l) := by
+  dsimp [rotationMatrix_unit]
+  rw [Units.ext_iff]
+  exact rotationMatrix_pow θ l
+
+theorem rotationMatrix_unit_pow_n [NeZero n] (i : ℤ) :  rotationMatrix_unit (2 * π * i / n) ^ n = 1 := by
+  dsimp [rotationMatrix_unit]
+  rw [Units.ext_iff]
+  exact rotationMatrix_pow_n i
+
+lemma conj_relation : reflectionMatrix * rotationMatrix (2 * π / ↑n)
+    * reflectionMatrix * rotationMatrix (2 * π / ↑n) = 1 := by
+  ext i j
+  simp
+  fin_cases i
+  . fin_cases j
+    . simp only [Fin.zero_eta, Fin.isValue, Matrix.cons_val_zero, Matrix.one_apply_eq]
+      -- i = 0, j = 0
+      rw [← pow_two]
+      rw [← pow_two]
+      simp only [cos_sq_add_sin_sq]
+
+    . simp only [Fin.mk_one, Fin.isValue, Matrix.cons_val_one, Matrix.cons_val_fin_one,
+      Fin.zero_eta, Matrix.cons_val_zero, ne_eq, zero_ne_one, not_false_eq_true,
+      Matrix.one_apply_ne]
+      -- i = 0 j = 1
+      ring
+
+  . fin_cases j
+    . simp only [Fin.zero_eta, Fin.isValue, Matrix.cons_val_zero, Fin.mk_one, Matrix.cons_val_one,
+      ne_eq, one_ne_zero, not_false_eq_true, Matrix.one_apply_ne]
+      -- i = 1, j = 0
+      ring
+
+    . simp only [Fin.mk_one, Fin.isValue, Matrix.cons_val_one, Matrix.cons_val_fin_one,
+      Matrix.one_apply_eq]
+      -- i = 1, j = 1
+      rw [← pow_two]
+      rw [← pow_two]
+      simp only [sin_sq_add_cos_sq]
+
+lemma conj_unit_relation : reflectionMatrix_unit * rotationMatrix_unit (2 * π / ↑n)
+    * reflectionMatrix_unit * rotationMatrix_unit (2 * π / ↑n) = 1 := by
+  dsimp [reflectionMatrix_unit, rotationMatrix_unit]
+  rw [Units.ext_iff]
+  exact conj_relation
+
+noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
+  dsimp [Representation]
+  let G := GL (Fin 2) ℝ
+  let r : G := rotationMatrix_unit (2 * π / n)
+  let s : G := reflectionMatrix_unit
+  let h_a : r ^ n = 1 := by
+    cases Nat.eq_zero_or_pos n with
+      | inl h_zero  => exact
+        pow_eq_one_iff_modEq.mpr (congrFun (congrArg HMod.hMod h_zero) (orderOf r))
+
+      | inr h_pos =>
+        have h_nezero: NeZero n := by
+          exact NeZero.of_pos h_pos
+
+        unfold r
+        --have hmodify : rotationMatrix_unit (2 * π / n) ^ n = rotationMatrix_unit (2 * π * 1 / n) ^ n := by
+        --  simp only [mul_one]
+        --rw [hmodify]
+        have hl2: rotationMatrix_unit (2 * π * (1 : ℤ)/ ↑n) ^ n = rotationMatrix_unit (2 * π / ↑n) ^ n := by
+          have h: 2 * π * (1: ℤ) / n = 2 * π / n := by
+            simp only [Int.cast_one, mul_one]
+          rw [h]
+        rw [← hl2]
+        rw [rotationMatrix_unit_pow_n (1 : ℤ)]
+
+  let h_b : s * s = 1 := by
+    simp [s]
+    exact reflectionMatrix_unit_mul_self
+  let h_ab : r * s * r = s := by
+    unfold r s
+    symm; rewrite [←inv_mul_eq_one, reflectionMatrix_unit_eq_inv_self]
+    simp only [←mul_assoc] -- left-associate
+    exact conj_unit_relation
+  let φ := lift h_a h_b h_ab
+  exact ((DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)).comp
+    Matrix.GeneralLinearGroup.toLin.toMonoidHom).comp φ
+
+end Real2DRepresentation
 
 end DihedralGroup
