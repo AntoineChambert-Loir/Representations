@@ -285,17 +285,47 @@ noncomputable def rotationMatrix_unit (θ : ℝ): GL (Fin 2) ℝ := by
   have h : IsUnit (rotationMatrix (θ : ℝ)):= by exact rotM_isUnit θ
   exact h.unit
 
+
+lemma rotationMatrix_unit_pow (θ : ℝ) (l : ℕ) : (rotationMatrix_unit θ) ^ l = rotationMatrix_unit (θ * l) := by
+  dsimp [rotationMatrix_unit]
+  rw [Units.ext_iff]
+  exact rotationMatrix_pow θ l
+
+theorem rotationMatrix_unit_pow_n [NeZero n] (i : ℤ) :  rotationMatrix_unit (2 * π * i / n) ^ n = 1 := by
+  dsimp [rotationMatrix_unit]
+  rw [Units.ext_iff]
+  exact rotationMatrix_pow_n i
+
 lemma conj_relation : reflectionMatrix * rotationMatrix (2 * π / ↑n)
     * reflectionMatrix * rotationMatrix (2 * π / ↑n) = 1 := by
   ext i j
   simp
   fin_cases i
   . fin_cases j
-    . sorry
-    . sorry
+    . simp only [Fin.zero_eta, Fin.isValue, Matrix.cons_val_zero, Matrix.one_apply_eq]
+      -- i = 0, j = 0
+      rw [← pow_two]
+      rw [← pow_two]
+      simp only [cos_sq_add_sin_sq]
+
+    . simp only [Fin.mk_one, Fin.isValue, Matrix.cons_val_one, Matrix.cons_val_fin_one,
+      Fin.zero_eta, Matrix.cons_val_zero, ne_eq, zero_ne_one, not_false_eq_true,
+      Matrix.one_apply_ne]
+      -- i = 0 j = 1
+      ring
+
   . fin_cases j
-    . sorry
-    . sorry
+    . simp only [Fin.zero_eta, Fin.isValue, Matrix.cons_val_zero, Fin.mk_one, Matrix.cons_val_one,
+      ne_eq, one_ne_zero, not_false_eq_true, Matrix.one_apply_ne]
+      -- i = 1, j = 0
+      ring
+
+    . simp only [Fin.mk_one, Fin.isValue, Matrix.cons_val_one, Matrix.cons_val_fin_one,
+      Matrix.one_apply_eq]
+      -- i = 1, j = 1
+      rw [← pow_two]
+      rw [← pow_two]
+      simp only [sin_sq_add_cos_sq]
 
 lemma conj_unit_relation : reflectionMatrix_unit * rotationMatrix_unit (2 * π / ↑n)
     * reflectionMatrix_unit * rotationMatrix_unit (2 * π / ↑n) = 1 := by
@@ -308,7 +338,26 @@ noncomputable def representation : Representation ℝ (DihedralGroup n) (Fin 2 �
   let G := GL (Fin 2) ℝ
   let r : G := rotationMatrix_unit (2 * π / n)
   let s : G := reflectionMatrix_unit
-  let h_a : r ^ n = 1 := sorry
+  let h_a : r ^ n = 1 := by
+    cases Nat.eq_zero_or_pos n with
+      | inl h_zero  => exact
+        pow_eq_one_iff_modEq.mpr (congrFun (congrArg HMod.hMod h_zero) (orderOf r))
+
+      | inr h_pos =>
+        have h_nezero: NeZero n := by
+          exact NeZero.of_pos h_pos
+
+        unfold r
+        --have hmodify : rotationMatrix_unit (2 * π / n) ^ n = rotationMatrix_unit (2 * π * 1 / n) ^ n := by
+        --  simp only [mul_one]
+        --rw [hmodify]
+        have hl2: rotationMatrix_unit (2 * π * (1 : ℤ)/ ↑n) ^ n = rotationMatrix_unit (2 * π / ↑n) ^ n := by
+          have h: 2 * π * (1: ℤ) / n = 2 * π / n := by
+            simp only [Int.cast_one, mul_one]
+          rw [h]
+        rw [← hl2]
+        rw [rotationMatrix_unit_pow_n (1 : ℤ)]
+
   let h_b : s * s = 1 := by
     simp [s]
     exact reflectionMatrix_unit_mul_self
