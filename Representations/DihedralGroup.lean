@@ -294,14 +294,17 @@ theorem rotationMatrix_pow (θ : ℝ) (l : ℕ) :
       ring_nf
     )
 
-theorem rotationMatrix_pow_n [NeZero n] (i : ℤ) :
+theorem rotationMatrix_pow_n (i : ℤ) :
     rotationMatrix (2 * π * i / n) ^ n = 1 := by
-  rw [rotationMatrix_pow]
-  have h₁ : cos (2 * π * i) = 1 := by
-    convert cos_int_mul_two_pi i using 2; ring
-  have h₂ : sin (2 * π * i) = 0 := by
-    convert sin_int_mul_pi (2 * i) using 2; push_cast; ring
-  ext i j; fin_cases i <;> fin_cases j <;> simpa
+  by_cases h:n = 0
+  · subst h; rfl
+  · haveI : NeZero n := ⟨h⟩
+    rw [rotationMatrix_pow]
+    have h₁ : cos (2 * π * i) = 1 := by
+      convert cos_int_mul_two_pi i using 2; ring
+    have h₂ : sin (2 * π * i) = 0 := by
+      convert sin_int_mul_pi (2 * i) using 2; push_cast; ring
+    ext i j; fin_cases i <;> fin_cases j <;> simpa
 
 abbrev reflectionMatrix /- (θ : ℝ) -/ : Matrix (Fin 2) (Fin 2) ℝ :=
   !![1,  0;
@@ -315,6 +318,13 @@ theorem reflectionMatrix_conj_rotationMatrix (θ : ℝ) :
     = rotationMatrix (-θ) := by
   rewrite [show reflectionMatrix⁻¹ = reflectionMatrix by unfold Matrix.inv; simp]
   ext i j; fin_cases i <;> fin_cases j <;> simp
+
+theorem rot_mul_refl_mul_rot_eq_refl (θ : ℝ) :
+    rotationMatrix θ * reflectionMatrix * rotationMatrix θ = reflectionMatrix := by
+  ext i j; fin_cases i <;> fin_cases j <;> unfold rotationMatrix reflectionMatrix
+  case «0».«0» => simp [←pow_two, cos_sq_add_sin_sq θ]
+  case «1».«1» => have := congrArg Neg.neg (cos_sq_add_sin_sq θ); simp_all [pow_two]
+  case «0».«1» | «1».«0» => simp [mul_comm]
 
 -- example of obtaining an element of GL given a matrix and proof of invertibility
 noncomputable example (t : Matrix (Fin 2) (Fin 2) ℝ) (h : IsUnit t) : GL (Fin 2) ℝ := h.unit
@@ -362,7 +372,7 @@ lemma rotationMatrix_unit_pow (θ : ℝ) (l : ℕ) :
   rw [Units.ext_iff]
   exact rotationMatrix_pow θ l
 
-theorem rotationMatrix_unit_pow_n [NeZero n] (i : ℤ) :
+theorem rotationMatrix_unit_pow_n (i : ℤ) :
     rotationMatrix_unit (2 * π * i / n) ^ n = 1 := by
   dsimp [rotationMatrix_unit]
   rw [Units.ext_iff]
@@ -385,6 +395,11 @@ lemma conj_unit_relation :
   dsimp [reflectionMatrix_unit, rotationMatrix_unit]
   rw [Units.ext_iff]
   exact conj_relation
+
+theorem rot_mul_refl_mul_rot_eq_refl_unit (θ : ℝ) :
+    rotationMatrix_unit θ * reflectionMatrix_unit * rotationMatrix_unit θ
+    = reflectionMatrix_unit := by
+  ext : 1; push_cast; exact rot_mul_refl_mul_rot_eq_refl θ
 
 noncomputable def representation :
     Representation ℝ (DihedralGroup n) (Fin 2 → ℝ) := by
