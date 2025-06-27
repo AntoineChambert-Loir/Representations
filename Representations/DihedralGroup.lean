@@ -401,7 +401,7 @@ noncomputable def representation :
         --rw [hmodify]
         have hl2 : rotationMatrix_unit (2 * π * (1 : ℤ)/ ↑n) ^ n
                    = rotationMatrix_unit (2 * π / ↑n) ^ n := by
-          have h: 2 * π * (1: ℤ) / n = 2 * π / n := by
+          have h : 2 * π * (1: ℤ) / n = 2 * π / n := by
             simp only [Int.cast_one, mul_one]
           rw [h]
         rw [← hl2]
