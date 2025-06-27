@@ -1,7 +1,8 @@
-import Mathlib
-
 -- Work by Hikari Iwasaki, Wednesday-Thursday June 25-26, 2025
--- Regular representaiton over ℝ. There should be no problem extending this to an arbitrary field k.
+import Mathlib.Data.Real.Basic
+import Mathlib.RepresentationTheory.Basic
+
+-- Regular representation over ℝ. There should be no problem extending this to an arbitrary field k.
 
 noncomputable section
 
