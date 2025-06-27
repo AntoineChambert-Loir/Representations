@@ -3,7 +3,8 @@ import Mathlib.Tactic.NoncommRing
 
 variable (n: ℕ) (G: Type*) [Monoid G]
 
-example {G': Type*} [Group G'] {a: G'} {a_pow_n_eq_one: a^n = 1} {k l: ℕ} : k ≡ l [ZMOD n] → a^k = a^l := by
+example {G': Type*} [Group G'] {a: G'} {a_pow_n_eq_one: a^n = 1} {k l: ℕ} :
+    k ≡ l [ZMOD n] → a^k = a^l := by
   intro h
   refine pow_eq_pow_iff_modEq.mpr ?_
   apply Int.natCast_modEq_iff.mp
@@ -12,14 +13,16 @@ example {G': Type*} [Group G'] {a: G'} {a_pow_n_eq_one: a^n = 1} {k l: ℕ} : k 
   rw [kh] at h
   simpa using Int.ModEq.of_mul_right k h
 
-lemma pow_eq_pow_of_ModEq {G: Type*} [Monoid G] {a: G} {i j n: ℕ} (h₁: a^n = 1) (h₂: i ≡ j [MOD n]) : a^i = a^j := by
+lemma pow_eq_pow_of_ModEq {G: Type*} [Monoid G] {a: G} {i j n: ℕ}
+    (h₁: a^n = 1) (h₂: i ≡ j [MOD n]) : a^i = a^j := by
   wlog i_le_j: i ≤ j
   · exact (this h₁ h₂.symm $ le_of_not_ge i_le_j).symm
   · let ⟨k, hk⟩ := (Nat.modEq_iff_dvd' i_le_j).mp h₂
     apply Nat.eq_add_of_sub_eq i_le_j at hk
     simp [hk, pow_add, pow_mul, h₁]
 
-lemma rel_two_eq_xa {G: Type*} [Monoid G] {a x: G} {n: ℕ} [NeZero n] {i j: ZMod n} (h₁: a^n = 1) (h₂: a * x * a = x): 
+lemma rel_two_eq_xa {G: Type*} [Monoid G] {a x: G} {n: ℕ} [NeZero n] {i j: ZMod n}
+    (h₁: a^n = 1) (h₂: a * x * a = x):
     a^i.val * x * a^j.val = x * a^(j - i).val := by
   if n_one: n = 1 then
     subst n_one
@@ -57,7 +60,8 @@ lemma rel_two_eq_xa {G: Type*} [Monoid G] {a x: G} {n: ℕ} [NeZero n] {i j: ZMo
 
 termination_by i.val
 
-def QuaternionGroup.lift [NeZero n] (a x: G) (h₁: a^(2 * n) = 1) (h₂: x^2 = a^n) (h₃: a * x * a = x):
+def QuaternionGroup.lift [NeZero n] (a x: G)
+    (h₁: a^(2 * n) = 1) (h₂: x^2 = a^n) (h₃: a * x * a = x):
     QuaternionGroup n →* G where
   toFun := fun g => match g with
     | .a k => a ^ k.val
@@ -73,7 +77,7 @@ def QuaternionGroup.lift [NeZero n] (a x: G) (h₁: a^(2 * n) = 1) (h₂: x^2 = 
 
     case' a.a => rw [<-pow_add]
     case' xa.a => rw [(?_: a^(l + m).val = a^(l.val + m.val)), mul_assoc, <-pow_add]
-    case a.a | xa.a => exact pow_eq_pow_of_ModEq h₁ (by simp [<-ZMod.eq_iff_modEq_nat])
+    case a.a | xa.a => apply pow_eq_pow_of_ModEq h₁; simp [←ZMod.eq_iff_modEq_nat]
 
     · rw [<-mul_assoc, <-rel_two_eq_xa h₁ h₃]
     · conv_rhs => calc x * a^l.val * (x * a^m.val)
@@ -85,4 +89,3 @@ def QuaternionGroup.lift [NeZero n] (a x: G) (h₁: a^(2 * n) = 1) (h₂: x^2 = 
       apply pow_eq_pow_of_ModEq h₁
       simp [<-ZMod.eq_iff_modEq_nat]
       ring
-
