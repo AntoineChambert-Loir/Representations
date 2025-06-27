@@ -293,8 +293,10 @@ theorem rotationMatrix_pow (θ : ℝ) (l : ℕ) :
 theorem rotationMatrix_pow_n [NeZero n] (i : ℤ) :
     rotationMatrix (2 * π * i / n) ^ n = 1 := by
   rw [rotationMatrix_pow]
-  have h₁ : cos (2 * π * i) = 1 := sorry
-  have h₂ : sin (2 * π * i) = 0 := sorry
+  have h₁ : cos (2 * π * i) = 1 := by
+    convert cos_int_mul_two_pi i using 2; ring_nf
+  have h₂ : sin (2 * π * i) = 0 := by
+    convert sin_int_mul_pi (2 * i) using 2; push_cast; ring_nf
   ext i j; fin_cases i <;> fin_cases j <;> simpa
 
 abbrev reflectionMatrix /- (θ : ℝ) -/ : Matrix (Fin 2) (Fin 2) ℝ :=
@@ -306,8 +308,7 @@ theorem reflectionMatrix_mul_self : reflectionMatrix * reflectionMatrix = 1 := b
 
 theorem reflectionMatrix_conj_rotationMatrix (θ : ℝ) :
     reflectionMatrix * rotationMatrix θ * reflectionMatrix⁻¹ = (rotationMatrix (-θ)) := by
-  rw [(show reflectionMatrix⁻¹ = reflectionMatrix from
-         sorry /- DivisionMonoid.inv_eq_of_mul reflectionMatrix_mul_self -/)]
+  rewrite [show reflectionMatrix⁻¹ = reflectionMatrix by unfold Matrix.inv; simp]
   ext i j; fin_cases i <;> fin_cases j <;> simp
 
 -- example of obtaining an element of GL given a matrix and proof of invertibility
