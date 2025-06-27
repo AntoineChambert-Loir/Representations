@@ -326,6 +326,8 @@ theorem rot_mul_refl_mul_rot_eq_refl (θ : ℝ) :
   case «1».«1» => have := congrArg Neg.neg (cos_sq_add_sin_sq θ); simp_all [pow_two]
   case «0».«1» | «1».«0» => simp [mul_comm]
 
+section GLApproach
+
 -- example of obtaining an element of GL given a matrix and proof of invertibility
 noncomputable example (t : Matrix (Fin 2) (Fin 2) ℝ) (h : IsUnit t) : GL (Fin 2) ℝ := h.unit
 
@@ -436,6 +438,8 @@ noncomputable def representation :
   let φ := lift h_a h_b h_ab
   exact ((DistribMulAction.toModuleEnd ℝ (Fin 2 → ℝ)).comp
     Matrix.GeneralLinearGroup.toLin.toMonoidHom).comp φ
+
+end GLApproach
 
 end Real2DRepresentation
 
