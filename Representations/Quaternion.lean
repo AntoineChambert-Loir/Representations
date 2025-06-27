@@ -144,125 +144,43 @@ def lift_nzero_to_group {G: Type*} [Group G] (a x: G) (h₁: x^2 = 1) (h₂: a *
 
 def lift_nzero (a x: G) (h₁: x^2 = 1) (h₂: a * x * a = x):
     QuaternionGroup 0 →* G :=
-  let f: QuaternionGroup 0 → G := fun g => match g with
-    | .a (k: ℤ) => if k ≥ 0 then a^k.natAbs else x * a^k.natAbs * x
-    | .xa (k: ℤ) => if k ≥ 0 then x * a^k.natAbs else a^k.natAbs * x
+  let a': Gˣ := Units.mk
+    (val := a)
+    (inv := x * a * x)
+    (val_inv := by 
+      rw [(by group: a * (x * a * x) = (a * x * a) * x)]
+      rw [h₂, <-pow_two, h₁]
+    )
+    (inv_val := by
+      rw [(by group: (x * a * x) * a = x * (a * x * a))]
+      rw [h₂, <-pow_two, h₁]
+    )
+  let x': Gˣ := Units.mk
+    (val := x)
+    (inv := x)
+    (val_inv := by rw [<-pow_two, h₁])
+    (inv_val := by rw [<-pow_two, h₁])
+  have h₂': a' * x' * a' = x' := by
+    apply Units.ext_iff.mpr
+    repeat rw [Units.val_mul]
+    exact h₂
   {
-    toFun := f
-    map_one' := by unfold f; rw [one_def]; simp
+    toFun g := match g with
+      | .a (k: ℤ) => Units.instGroup.zpow k a'
+      | .xa (k: ℤ) => x' * Units.instGroup.zpow k a'
+    map_one' := by rw [one_def]; simp
     map_mul' := by
-      have a_unit: IsUnit a := isUnit_iff_exists.mpr $ by
-        use x * a * x
-        split_ands
-        · group; rw [h₂, <-pow_two, h₁]
-        · rw [(by group: x * a * x * a = x * (a * x * a)), h₂, <-pow_two, h₁]
-      have x_unit: IsUnit x := isUnit_iff_exists.mpr $ by
-        use x
-        split_ands <;> rw [<-pow_two, h₁]
-      have factor_through_units: ∀g: QuaternionGroup 0, IsUnit (f g) := by
-        intro g
-        obtain (k: ℤ) | (k: ℤ) := g
-        <;> obtain ge_zero | lt_zero := (by omega: k ≥ 0 ∨ k < 0)
-        <;> (dsimp [f]; split_ifs with h)
-        · exact a_unit.pow k.natAbs
-        · absurd lt_zero; exact not_lt_of_ge h
-        · exact (x_unit.mul $ a_unit.pow k.natAbs).mul x_unit
-        · exact x_unit.mul (a_unit.pow k.natAbs)
-        · exact x_unit.mul (a_unit.pow k.natAbs)
-        · exact (a_unit.pow k.natAbs).mul x_unit
-      have map_comm: ∀x: QuaternionGroup 0, f x = (factor_through_units x).unit.val := by
-        sorry
-      intro x y
-      rw [map_comm x, map_comm y, map_comm (x * y)]
-      rw [<-Units.val_mul]
-      apply Units.eq_iff.mpr
-      exact @IsUnit.unit_mul G _ (f x) (f y) (factor_through_units x) (factor_through_units y)
-      /-
-      let ⟨a', ha⟩ := factor_through_units (.a 1)
-      let ⟨x', hx⟩ := factor_through_units (.xa 0)
-      let f' := lift_nzero_to_group a' x' ?_ ?_
-      · sorry
-      ·
-        rw [x'.val_zpow_eq_zpow_val 2]
-        sorry
-      · sorry
-      -/
+      intro g₁ g₂
+      obtain (l: ℤ) | (l: ℤ) := g₁
+      <;> obtain (m: ℤ) | (m: ℤ) := g₂
+      <;> simp [a_mul_xa, Nat.mul_zero, zpow_eq_pow, <-Units.val_mul]
+      <;> apply Units.ext_iff.mp
+      · rw [<-zpow_add]
+      · rw [<-mul_assoc, rel_two_eq_xa_zpow h₂']
+      · rw [mul_assoc, <-zpow_add]
+      · rw [(by group: x' * a'^l * (x' * a'^m) = x' * (a'^l * x' * a'^m))]
+        rw [rel_two_eq_xa_zpow h₂', <-mul_assoc]
+        rw [(Units.val_eq_one.mp x'.inv_val: x' * x' = 1), one_mul]
   }
 
 end QuaternionGroup
-
-/-
-
-abbrev Int.pos_disc (x: ℤ): ℕ := x.sign.toNat
-abbrev Int.neg_disc (x: ℤ): ℕ := x.neg.sign.toNat
-
-@[simp]
-theorem pos_disc_zero: Int.pos_disc 0 = 0 := by bound
-@[simp]
-theorem neg_disc_zero: Int.neg_disc 0 = 0 := by bound
-@[simp]
-theorem pos_disc_zero_neg: (Int.neg 0).pos_disc = 0 := by bound
-@[simp]
-lemma neg_disc_zero_neg: (Int.neg 0).neg_disc = 0 := by bound
-@[simp]
-lemma neg_disc_neg_one {l: ℤ} (h: l < 0): l.neg_disc = 1 := by
-  unfold Int.neg_disc
-  rw [(?_: l.neg.sign = 1)]
-  · trivial
-  · exact Int.sign_eq_one_iff_pos.mpr (Int.neg_pos.mpr h)
-@[simp]
-lemma neg_disc_pos_zero {l: ℤ} (h: l > 0): l.neg_disc = 0 := by
-  unfold Int.neg_disc
-  rw [(?_: l.neg.sign = -1)]
-  · trivial
-  · exact Int.sign_eq_neg_one_iff_neg.mpr (Int.neg_neg_iff_pos.mpr h)
-
-def lift_n_zero (a x: G) (h₂: x^2 = 1) (h₃: a * x * a = x):
-    QuaternionGroup 0 →* G where
-  toFun := fun g => match g with
-    | .a (k: ℤ) => x^k.neg_disc * a^k.natAbs * x^k.neg_disc
-    | .xa (k: ℤ) => x^k.pos_disc * a^k.natAbs * x^k.neg_disc
-  map_one' := by
-    rw [(by rfl: (1: QuaternionGroup 0) = .a 0)]
-    simp!
-  map_mul' := by
-    intro g₁ g₂
-    obtain (l: ℤ) | (l: ℤ) := g₁
-    <;> obtain (m: ℤ) | (m: ℤ) := g₂
-    <;> simp
-    ·
-      obtain sl | sl | sl := (by omega: l < 0 ∨ l = 0 ∨ l > 0)
-      <;> try simp [sl]
-      <;> obtain sm | sm | sm := (by omega: m < 0 ∨ m = 0 ∨ m > 0)
-      <;> try simp [sl, sm]
-      (case' a.a.inl.inl =>
-        conv_rhs => calc x * a^l.natAbs * x * (x * a^m.natAbs * x)
-          _ = x * a^l.natAbs * x^2 * a^m.natAbs * x := by noncomm_ring
-          _ = x * a^l.natAbs * a^m.natAbs * x := by simp [h₂]
-          _ = x * (a^l.natAbs * a^m.natAbs) * x := by noncomm_ring
-          _ = x * a^(l.natAbs + m.natAbs) * x := by rw [<-pow_add]
-          _ = x * a^(l + m).natAbs * x := by rw [<-Int.natAbs_add_of_nonpos (le_of_lt sl) (le_of_lt sm)]
-      );
-
-      (case a.a.inr.inr.inr.inr =>
-        have := Int.add_pos_of_pos_of_nonneg sl (le_of_lt sm)
-        simp [neg_disc_pos_zero this, <-pow_add]
-        rw [<-Int.natAbs_add_of_nonneg (le_of_lt sl) (le_of_lt sm)]
-      );
-
-      all_goals obtain ssum | ssum | ssum := (by omega: (l + m) < 0 ∨ (l + m) = 0 ∨ (l + m) > 0)
-      <;> try simp [sl, sm, ssum]
-      · rw [(by noncomm_ring: x * x = x^2), h₂]
-      · omega
-      · sorry
-      · sorry
-      · sorry
-      · sorry
-      · sorry
-      · sorry
-    ·
-      sorry
-    ·
-      sorry
-    · sorry
--/
