@@ -2,3 +2,4 @@ import Representations.DihedralGroup
 import Representations.RealRepDn
 import Representations.Quaternion
 import Representations.RegRep
+import Representations.SemidirectProduct
