@@ -83,7 +83,8 @@ theorem rot_id_pow (n : ℕ) (hn : n ≠ 0): ∀ (l : ℕ), (rotMat n)^(n * l) =
 def refMat : Matrix (Fin 2) (Fin 2) ℝ :=
   !![1 , 0 ; 0,  -1]
 
-theorem ref_rot (n: ℕ)  (hn : n ≠ 0): (rotMat n) * refMat = refMat * (rotMat n)^(n-1) := by
+theorem ref_rot (n: ℕ)  (hn : n ≠ 0):
+    (rotMat n) * refMat = refMat * (rotMat n)^(n-1) := by
   rw [rot_l]
   unfold rotMat refMat
   ext i j
@@ -99,7 +100,8 @@ theorem ref_rot (n: ℕ)  (hn : n ≠ 0): (rotMat n) * refMat = refMat * (rotMat
   }
 
 
-theorem ref_rot' (n: ℕ)  (hn : n ≠ 0): (rotMat n)^(n-1) * refMat = refMat * rotMat n := by
+theorem ref_rot' (n: ℕ)  (hn : n ≠ 0):
+    (rotMat n)^(n-1) * refMat = refMat * rotMat n := by
   rw [rot_l]
   unfold rotMat refMat
   ext i j
@@ -123,7 +125,8 @@ theorem ref_ref_id : refMat * refMat  = 1:= by
 
 
 -- #check Nat.zero_le
-theorem ref_rot_gen (n: ℕ)  (hn : n ≠ 0): ∀ l', (l' < n) → (rotMat n)^l' = refMat * (rotMat n)^(n-l') * refMat  := by
+theorem ref_rot_gen (n: ℕ)  (hn : n ≠ 0):
+    ∀ l', (l' < n) → (rotMat n)^l' = refMat * (rotMat n)^(n-l') * refMat  := by
   intro l' hl'
   induction' l' with l' ih
   · rw [pow_zero, tsub_zero, rot_id n hn, mul_one, ref_ref_id]
@@ -154,7 +157,8 @@ theorem ref_rot_gen (n: ℕ)  (hn : n ≠ 0): ∀ l', (l' < n) → (rotMat n)^l'
     contradiction
 
 
-theorem ref_rot_id (n: ℕ)  (hn : n ≠ 0): ∀ (l : ℕ), refMat * (rotMat n)^l * refMat * (rotMat n)^l = 1 := by
+theorem ref_rot_id (n: ℕ)  (hn : n ≠ 0):
+    ∀ (l : ℕ), refMat * (rotMat n)^l * refMat * (rotMat n)^l = 1 := by
   intro l
   induction' l with l ih
   · simp
@@ -188,7 +192,8 @@ theorem stdmap_one (n : ℕ): stdmap n 1 = 1 := by
 -- #check Matrix.toLin'_mul
 
 
-theorem stdmap_mul (n: ℕ) (hn : n ≠ 0): ∀ x y , stdmap n (x * y) = stdmap n x ∘ₗ stdmap n y := by
+theorem stdmap_mul (n: ℕ) (hn : n ≠ 0):
+    ∀ x y, stdmap n (x * y) = stdmap n x ∘ₗ stdmap n y := by
   haveI : NeZero n := ⟨hn⟩
   intro x y
   match y with
@@ -258,7 +263,8 @@ theorem stdmap_mul (n: ℕ) (hn : n ≠ 0): ∀ x y , stdmap n (x * y) = stdmap 
 
       push_neg at h
       have : m.val + k.val = (m + k).val + n := ZMod.val_add_val_of_le h
-      rw [← mul_one ((rotMat n) ^ ((m + k).val)), ← rot_id n hn, ← pow_add, ←this, add_comm, pow_add]
+      rw [← mul_one ((rotMat n) ^ ((m + k).val)), ← rot_id n hn, ← pow_add,
+          ←this, add_comm, pow_add]
       repeat rw [← mul_assoc]
       congr 1
       nth_rw 1 [← one_mul ((rotMat n)^ k.val), ← ref_ref_id, ← mul_one refMat]
@@ -295,7 +301,8 @@ theorem stdmap_mul (n: ℕ) (hn : n ≠ 0): ∀ x y , stdmap n (x * y) = stdmap 
 
       push_neg at h
       have : m.val + k.val = (m + k).val + n := ZMod.val_add_val_of_le h
-      rw [← mul_one ((rotMat n) ^ ((m + k).val)), ← rot_id n hn, ← pow_add, ←this, add_comm, pow_add]
+      rw [← mul_one ((rotMat n) ^ ((m + k).val)), ← rot_id n hn, ← pow_add,
+          ←this, add_comm, pow_add]
       repeat rw [← mul_assoc]
       rw [ref_rot_id n hn k.val, one_mul]
 
